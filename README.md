@@ -40,7 +40,7 @@ docker run --rm `
   zh-trees-analysis
 ```
 
-Ergebnis: Nach erfolgreichem Durchlauf finden Sie den Report (index.html) und die Grafik im Ordner output/.
+Ergebnis: Öffnen Sie nach dem Durchlauf die Datei output/index.html in Ihrem Browser. Sie können in der Legende auf Epochen klicken, um diese ein- oder auszublenden.
 
 ## 🧪 Tests
 
@@ -54,7 +54,7 @@ docker run --rm zh-trees-analysis python -m pytest tests/
 Die Tests werden zudem bei jedem Push auf main automatisch durch die GitHub Actions Pipeline ausgeführt (siehe Reiter "Actions" auf GitHub).
 
 ## 📂 Projektstruktur
-.
+. <br>
 ├── .github/workflows/  # CI/CD configuration <br>
 ├── data/               # Locale Fallback-Data (CSV) <br>
 ├── output/             # Generated Reports <br>
