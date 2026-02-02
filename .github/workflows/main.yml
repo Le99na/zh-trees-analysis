@@ -1,0 +1,30 @@
+name: Build Analysis Container
+
+# Wann soll das passieren? -> Bei jedem Push auf den main Branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Wir nutzen einen Linux-Server von GitHub
+
+    steps:
+    # 1. Code aus dem Repo holen
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Docker Image bauen
+    - name: Build Docker image
+      run: docker build -t zh-trees-analysis .
+
+    # 3. Testlauf (Optional): Wir schauen, ob der Container ohne Fehler startet
+    # Hinweis: Da wir im GitHub-Runner keine Daten gemountet haben,
+    # wird er versuchen, die Daten herunterzuladen.
+    # Wenn der OGD-Server 500 wirft, könnte das hier fehlschlagen.
+    # Aber das "Bauen" (Schritt 2) ist das Wichtigste!
+    - name: Test run (Dry Run)
+      run: |
+        docker run --rm zh-trees-analysis python --version
