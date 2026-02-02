@@ -24,4 +24,4 @@ jobs:
     - name: Run Unit Tests
       run: |
         # Wir starten den Container und führen pytest aus
-        docker run --rm zh-trees-analysis pytest tests/
+        docker run --rm zh-trees-analysis python -m pytest tests/
