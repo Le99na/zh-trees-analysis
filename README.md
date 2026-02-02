@@ -1,7 +1,7 @@
 # 🌳 Zurich Trees Analysis
 
 Eine reproduzierbare Data-Science-Pipeline zur Analyse des Baumkatasters der Stadt Zürich.
-Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standorte) der Bäume und generiert einen automatisierten HTML-Report.
+Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standorte) der Bäume und generiert einen **interaktiven HTML-Report**.
 
 ## 🚀 Features
 
@@ -24,7 +24,7 @@ docker build -t zh-trees-analysis .
 
 Der Container benötigt Zugriff auf einen lokalen data-Ordner (Input) und einen output-Ordner (Ergebnis). Führen Sie folgenden Befehl im Hauptverzeichnis des Projekts aus:
 
-####Linux/Mac:
+#### Linux/Mac:
 ```bash
 docker run --rm \
   -v "$(pwd)/output:/app/output" \
@@ -32,7 +32,7 @@ docker run --rm \
   zh-trees-analysis
 ```
 
-####Windows (PowerShell):
+#### Windows (PowerShell):
 ```PowerShell
 docker run --rm `
   -v ${PWD}/output:/app/output `
@@ -55,11 +55,13 @@ Die Tests werden zudem bei jedem Push auf main automatisch durch die GitHub Acti
 
 ## 📂 Projektstruktur
 .
-├── .github/workflows/  # CI/CD Konfiguration
-├── data/               # Lokale Fallback-Daten (CSV)
-├── output/             # Generierte Reports (werden hier gespeichert)
-├── src/                # Quellcode (Logik)
-├── tests/              # Unit Tests
-├── Dockerfile          # Container Definition
-├── requirements.txt    # Python Abhängigkeiten
-└── README.md           # Dokumentation
+├── .github/workflows/  # CI/CD configuration <br>
+├── data/               # Locale Fallback-Data (CSV) <br>
+├── output/             # Generated Reports <br>
+├── src/                # Quellcode <br>
+├── tests/              # Unit Tests <br>
+├── Dockerfile          # Container Definition <br>
+├── requirements.txt    # Python Dependencies <br>
+└── README.md           # Documentation <br>
+
+
