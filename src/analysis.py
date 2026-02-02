@@ -7,89 +7,30 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import requests
 from io import StringIO
+import re
 
-# 1. Konfiguration
-# Wir laden die Daten live. Das garantiert, dass wir immer den aktuellen Stand haben.
-DATA_URL = "https://data.stadt-zuerich.ch/dataset/geo_baumkataster/download/gsz.baumkataster.csv"
-LOCAL_DATA_PATH = os.path.join("data", "gsz.baumkataster_baumstandorte.csv") # Pfad zur lokalen Datei
-OUTPUT_DIR = "output"
 
-# Sicherstellen, dass der Output-Ordner existiert (wichtig für Docker!)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-# Auch den Data-Ordner sicherstellen, falls wir später cachen wollen
-os.makedirs("data", exist_ok=True)
+# --- EIGENE FUNKTIONEN (UNIT TESTABLE) ---
 
-print(f"Versuche Daten zu laden...")
+def parse_geometry(geometry_string):
+    """
+    Extrahiert X und Y aus einem String wie 'POINT (2683450 1250100)'
+    Gibt (None, None) zurück, wenn das Format nicht passt.
+    """
+    if pd.isna(geometry_string):
+        return None, None
 
-# 2. Daten laden (Resiliente Logik)
-df = None
+    # Regex sucht nach: POINT (Zahl Zahl)
+    match = re.search(r'POINT \(([\d\.]+) ([\d\.]+)\)', str(geometry_string))
+    if match:
+        return float(match.group(1)), float(match.group(2))
+    return None, None
 
-# Versuch A: Live Download
-try:
-    print(f"Versuche Download von {DATA_URL}...")
-    # Wir faken einen Browser-User-Agent, damit der Server uns nicht sofort blockt
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(DATA_URL, headers=headers)
 
-    if response.status_code == 200:
-        # Erfolgreich geladen -> In Pandas lesen
-        df = pd.read_csv(StringIO(response.text))
-        print("Download erfolgreich!")
-
-        # Optional: Wir speichern es lokal als Backup für das nächste Mal
-        df.to_csv(LOCAL_DATA_PATH, index=False)
-    else:
-        print(f"Server antwortete mit Status Code: {response.status_code}")
-
-except Exception as e:
-    print(f"Download fehlgeschlagen: {e}")
-
-# Versuch B: Lokaler Fallback
-if df is None:
-    print("Versuche lokale Datei zu laden...")
-    if os.path.exists(LOCAL_DATA_PATH):
-        df = pd.read_csv(LOCAL_DATA_PATH)
-        print(f"Lokale Datei geladen: {LOCAL_DATA_PATH}")
-    else:
-        print("KRITISCHER FEHLER: Keine Daten verfügbar (weder Online noch Lokal).")
-        print("Bitte lade die Datei manuell herunter und speichere sie in 'data/baumkataster.csv'.")
-        exit(1)
-
-# 3. Bereinigen & Feature Engineering (Der Fix!)
-print("Starte Datenbereinigung...")
-
-# WICHTIG: Koordinaten aus 'geometry' Spalte extrahieren
-# Format ist: "POINT (2683450 1250100)"
-if 'geometry' in df.columns:
-    print("Extrahiere Koordinaten aus 'geometry' Spalte...")
-    # Regex sucht nach zwei Zahlen getrennt durch Leerraum in Klammern
-    coords = df['geometry'].str.extract(r'POINT \(([\d\.]+) ([\d\.]+)\)')
-    df['x_coord'] = coords[0].astype(float) # Ost-West (ehemals g_long)
-    df['y_coord'] = coords[1].astype(float) # Nord-Süd (ehemals g_lat)
-elif 'g_long' in df.columns and 'g_lat' in df.columns:
-    df['x_coord'] = df['g_long']
-    df['y_coord'] = df['g_lat']
-else:
-    print("Fehler: Keine Koordinatenspalten gefunden (weder 'geometry' noch 'g_lat/g_long')")
-    print("Spalten im Datensatz:", df.columns.tolist())
-    exit(1)
-
-# Wir filtern ungültige Jahre und fehlende Koordinaten raus.
-current_year = datetime.now().year
-
-# Vorher: Anzahl Zeilen
-print(f"Rohdaten Zeilen: {len(df)}")
-
-df_clean = df[
-    (df['pflanzjahr'].notna()) &                # Kein leeres Jahr
-    (df['pflanzjahr'] > 1800) &                 # Plausibel
-    (df['pflanzjahr'] <= current_year) &        # Keine Zukunftsbäume
-    (df['x_coord'].notna()) &                     # Koordinaten müssen da sein
-    (df['y_coord'].notna())
-].copy()
-
-# Hier erstellen wir die "Spatiotemporale" Logik (Epochen)
 def get_epoch(year):
+    """Ordnet ein Jahr einer Epoche zu."""
+    if pd.isna(year):
+        return "Unbekannt"
     if year < 1960:
         return "Altbestand (< 1960)"
     elif 1960 <= year < 1990:
@@ -97,65 +38,102 @@ def get_epoch(year):
     else:
         return "Modern (> 1990)"
 
-df_clean['epoche'] = df_clean['pflanzjahr'].apply(get_epoch)
 
-print(f"Daten bereinigt. Verbleibende Bäume: {len(df_clean)}")
+# --- HAUPTPROGRAMM ---
 
-# 4. Visualisieren (Visualize)
-# Wir nutzen Seaborn für einen Scatterplot mit Facets (Subplots pro Epoche)
-print("Erstelle Grafik...")
+def main():
+    # 1. Konfiguration
+    DATA_URL = "https://data.stadt-zuerich.ch/dataset/geo_baumkataster/download/gsz.baumkataster_baumstandorte.csv"
+    LOCAL_DATA_PATH = os.path.join("data", "gsz.baumkataster_baumstandorte.csv")
+    OUTPUT_DIR = "output"
 
-sns.set_theme(style="whitegrid") # Sauberer Look
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs("data", exist_ok=True)
 
-# FacetGrid: Erstellt für jede 'epoche' ein eigenes kleines Bild nebeneinander
-g = sns.relplot(
-    data=df_clean,
-    x="x_coord",
-    y="y_coord",
-    col="epoche",          # Spalte die Bilder nach Epoche auf
-    hue="epoche",          # Färbe sie auch ein
-    kind="scatter",
-    palette="viridis",     # Professionelle Farbskala
-    alpha=0.6,             # Transparenz gegen Overplotting
-    s=10,                  # Punktgröße
-    height=5,
-    aspect=1
-)
+    print(f"Konfiguration: Suche Daten unter {LOCAL_DATA_PATH} oder online...")
 
-# Titel und Labels anpassen
-g.fig.suptitle("Spatiotemporale Verteilung der Bäume in Zürich", y=1.03, fontsize=16)
-g.set_axis_labels("Längengrad", "Breitengrad")
+    # 2. Daten laden
+    df = None
 
-# 5. Speichern (Output)
-output_path = os.path.join(OUTPUT_DIR, "baum_analyse_plot.png")
-plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    # Versuch A: Live Download
+    try:
+        print(f"Versuche Download von {DATA_URL}...")
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(DATA_URL, headers=headers, timeout=30)
+        if response.status_code == 200:
+            df = pd.read_csv(StringIO(response.text))
+            print("Download erfolgreich!")
+            df.to_csv(LOCAL_DATA_PATH, index=False)
+        else:
+            print(f"Server Status: {response.status_code}")
+    except Exception as e:
+        print(f"Download fehlgeschlagen: {e}")
 
-# 5. HTML Report
-print("Generiere HTML...")
-html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Baum-Analyse Zürich</title>
-    <style>
-        body {{ font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }}
-        img {{ max-width: 100%; height: auto; border: 1px solid #ddd; }}
-    </style>
-</head>
-<body>
-    <h1>🌳 Analyse des Zürcher Baumkatasters</h1>
-    <p>Datenquelle: OGD Stadt Zürich (Geoportal)</p>
-    <h2>Spatiotemporale Verteilung</h2>
-    <img src="baum_analyse_plot.png" alt="Baum Plot">
-    <p>Generiert am: {datetime.now().strftime('%d.%m.%Y')}</p>
-</body>
-</html>
-"""
+    # Versuch B: Lokal
+    if df is None:
+        if os.path.exists(LOCAL_DATA_PATH):
+            df = pd.read_csv(LOCAL_DATA_PATH, sep=None, engine='python')
+            print(f"Lokale Datei geladen: {LOCAL_DATA_PATH}")
+        else:
+            print("KRITISCHER FEHLER: Keine Daten gefunden.")
+            exit(1)
 
-html_path = os.path.join(OUTPUT_DIR, "index.html")
-with open(html_path, "w", encoding="utf-8") as f:
-    f.write(html_content)
+    # 3. Bereinigen mit unseren neuen Funktionen
+    print("Starte Datenbereinigung...")
+
+    # Neue Logik anwenden
+    if 'geometry' in df.columns:
+        print("Wende parse_geometry an...")
+        # Wir wenden die Funktion auf jede Zeile an
+        coords = df['geometry'].apply(parse_geometry)
+        # Das Ergebnis (Tupel) aufteilen in zwei Spalten
+        df[['x_coord', 'y_coord']] = pd.DataFrame(coords.tolist(), index=df.index)
+    elif 'g_long' in df.columns and 'g_lat' in df.columns:
+        df['x_coord'] = df['g_long']
+        df['y_coord'] = df['g_lat']
+
+    current_year = datetime.now().year
+
+    df_clean = df[
+        (df['pflanzjahr'].notna()) &
+        (df['pflanzjahr'] > 1800) &
+        (df['pflanzjahr'] <= current_year) &
+        (df['x_coord'].notna()) &
+        (df['y_coord'].notna())
+        ].copy()
+
+    df_clean['epoche'] = df_clean['pflanzjahr'].apply(get_epoch)
+
+    print(f"Daten bereinigt. Verbleibende Bäume: {len(df_clean)}")
+
+    # 4. Visualisieren
+    print("Erstelle Grafik...")
+    sns.set_theme(style="whitegrid")
+
+    g = sns.relplot(
+        data=df_clean,
+        x="x_coord", y="y_coord",
+        col="epoche", hue="epoche",
+        kind="scatter", palette="viridis",
+        alpha=0.6, s=10, height=5, aspect=1
+    )
+    g.fig.suptitle("Spatiotemporale Verteilung der Bäume in Zürich", y=1.03)
+
+    output_path = os.path.join(OUTPUT_DIR, "baum_analyse_plot.png")
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+
+    # 5. HTML Report
+    with open(os.path.join(OUTPUT_DIR, "index.html"), "w", encoding="utf-8") as f:
+        f.write(f"""
+        <html><body>
+        <h1>🌳 Analyse des Zürcher Baumkatasters</h1>
+        <img src="baum_analyse_plot.png" width="100%">
+        <p>Generiert am: {datetime.now().strftime('%d.%m.%Y')}</p>
+        </body></html>
+        """)
+
+    print(f"Fertig! Ergebnisse in {OUTPUT_DIR}")
 
 
-
-print(f"Analyse erfolgreich! Grafik gespeichert unter: {output_path}")
+if __name__ == "__main__":
+    main()

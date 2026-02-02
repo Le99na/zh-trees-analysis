@@ -20,11 +20,8 @@ jobs:
     - name: Build Docker image
       run: docker build -t zh-trees-analysis .
 
-    # 3. Testlauf (Optional): Wir schauen, ob der Container ohne Fehler startet
-    # Hinweis: Da wir im GitHub-Runner keine Daten gemountet haben,
-    # wird er versuchen, die Daten herunterzuladen.
-    # Wenn der OGD-Server 500 wirft, könnte das hier fehlschlagen.
-    # Aber das "Bauen" (Schritt 2) ist das Wichtigste!
-    - name: Test run (Dry Run)
+    # 3. Testlauf
+    - name: Run Unit Tests
       run: |
-        docker run --rm zh-trees-analysis python --version
+        # Wir starten den Container und führen pytest aus
+        docker run --rm zh-trees-analysis pytest tests/
