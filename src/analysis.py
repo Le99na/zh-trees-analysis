@@ -79,30 +79,52 @@ def main():
     df_clean['epoche'] = df_clean['pflanzjahr'].apply(get_epoch)
     print(f"Datensätze nach Bereinigung: {len(df_clean)}")
 
-    # 4. interactive visualisation with Plotly
-    print("Erstelle interaktiven Plot...")
+    # 4. ANALYSE (Das ist neu: Echte Zahlen berechnen!)
+    print("Berechne Statistiken...")
 
-    # we build an interactive scatter plot
+    total_trees = len(df_clean)
+
+    # find most prevalent tree name
+    if 'baumnamelat' in df_clean.columns:
+        top_species = df_clean['baumnamelat'].mode()[0]
+    elif 'baumnamedeu' in df_clean.columns:
+        top_species = df_clean['baumnamedeu'].mode()[0]
+    else:
+        top_species = "Unbekannt"
+
+    # Durchschnittsalter berechnen (einfache Annahme: 2024 - Pflanzjahr)
+    avg_age = 2024 - df_clean['pflanzjahr'].mean()
+
+    stats_text = (
+        f"Anzahl Bäume: {total_trees} | "
+        f"Häufigste Art: {top_species} | "
+        f"Ø Alter: {avg_age:.1f} Jahre"
+    )
+    print(f"Erkenntnis: {stats_text}")
+
+    # 5. VISUALISIEREN (Plotly with new Titel)
+    print("Generiere interaktiven Report...")
+
     fig = px.scatter(
         df_clean,
         x="x_coord",
         y="y_coord",
-        color="epoche",  # Das sorgt für die Legende & Farben
-        title="Interaktives Baumkataster Zürich",
-        hover_data=['pflanzjahr', 'baumnummer'],  # Infos beim Drüberfahren mit der Maus
-        opacity=0.4,
-        color_discrete_sequence=px.colors.qualitative.Bold  # Schöne Farben
+        color="epoche",
+        # add analysis results to title:
+        title=f"Zürcher Baumkataster Analyse<br><sup>{stats_text}</sup>",
+        hover_data=['pflanzjahr', 'baumnummer', 'baumnamelat'],
+        opacity=0.6,
+        color_discrete_sequence=px.colors.qualitative.Bold
     )
 
-    # layout optimisation (background white, fix aspect ratio for map)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
     fig.update_layout(
         template="plotly_white",
-        dragmode='pan',  # Standard-Werkzeug ist "Verschieben"
         width=1200,
-        height=800
+        height=800,
+        legend_title_text='Pflanz-Epoche',
+        margin=dict(t=100)  # More space for subtitle
     )
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)  # important to avoid distortion
-
     # 5. save as HTML
     # Plotly generates the complete HTML, JavaScript inclusive!
     output_file = os.path.join(OUTPUT_DIR, "index.html")
@@ -110,6 +132,10 @@ def main():
 
     print(f"Fertig! Interaktiver Report gespeichert unter: {output_file}")
 
-
 if __name__ == "__main__":
     main()
+
+
+
+
+

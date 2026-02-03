@@ -49,14 +49,15 @@ docker run --rm `
 
 Ergebnis: Öffnen Sie nach dem Durchlauf die Datei output/index.html in Ihrem Browser. Sie können in der Legende auf Epochen klicken, um diese ein- oder auszublenden.
 
-⚙️ CI/CD Pipeline
+## ⚙️ CI/CD Pipeline
+
 Dieses Projekt nutzt GitHub Actions für eine vollautomatisierte Pipeline:
 
-Continuous Integration (CI): Bei jedem Push wird der Docker-Container gebaut und die Unit-Tests (tests/) werden ausgeführt.
+1. Continuous Integration (CI): Bei jedem Push wird der Docker-Container gebaut und die Unit-Tests (tests/) werden ausgeführt.
 
-Continuous Deployment (CD): Wenn die Tests erfolgreich sind, generiert der Container den Report und pusht ihn automatisch in den gh-pages Branch.
+2. Continuous Deployment (CD): Wenn die Tests erfolgreich sind, generiert der Container den Report und pusht ihn automatisch in den gh-pages Branch.
 
-Hosting: GitHub Pages serviert die generierte HTML-Datei als öffentliche Webseite.
+3. Hosting: GitHub Pages serviert die generierte HTML-Datei als öffentliche Webseite.
 
 ## 📂 Projektstruktur
 
