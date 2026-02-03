@@ -90,7 +90,7 @@ def main():
         color="epoche",  # Das sorgt für die Legende & Farben
         title="Interaktives Baumkataster Zürich",
         hover_data=['pflanzjahr', 'baumnummer'],  # Infos beim Drüberfahren mit der Maus
-        opacity=0.7,
+        opacity=0.4,
         color_discrete_sequence=px.colors.qualitative.Bold  # Schöne Farben
     )
 

@@ -3,17 +3,22 @@
 Eine reproduzierbare Data-Science-Pipeline zur Analyse des Baumkatasters der Stadt Zürich.
 Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standorte) der Bäume und generiert einen **interaktiven HTML-Report**.
 
+### 🔗 [Hier klicken für die Live-Demo (Interaktiver Report)](https://le99na.github.io/zh-trees-analysis/)
+*(Der Report wird automatisch via CI/CD bei jedem Update neu generiert)*
+
 ## 🚀 Features
 
 * **Interaktive Visualisierung:** Nutzung von Plotly für zoom- und filterbare Karten (HTML).
 * **Robustes Data Engineering:** Hybrid-Ansatz für den Datenimport (Live-Download mit Fallback).
 * **Reproduzierbarkeit:** Vollständig containerisiert mit Docker.
 * **Qualitätssicherung:** Unit-Testing mit `pytest`.
-* **CI/CD:** Automatisierte Build- & Test-Pipeline via GitHub Actions.
-* **Automated Reporting:** Generiert Visualisierungen und eine HTML-Zusammenfassung.
+* **CI:** Automatisierte Build- & Test-Pipeline via **GitHub Actions**.
+* **Continuous Deployment (CD):** Vollautomatisches Publishing des Reports auf **GitHub Pages**.
 * **Code Quality:** Unit-Testing mit `pytest`.
 
 ## 🛠 Installation & Ausführung
+
+Falls Sie den Container lokal bauen und laufen lassen möchten (statt die Live-Demo anzusehen):
 
 Voraussetzung: [Docker](https://www.docker.com/) muss installiert sein.
 
@@ -44,19 +49,17 @@ docker run --rm `
 
 Ergebnis: Öffnen Sie nach dem Durchlauf die Datei output/index.html in Ihrem Browser. Sie können in der Legende auf Epochen klicken, um diese ein- oder auszublenden.
 
-## 🧪 Tests
+⚙️ CI/CD Pipeline
+Dieses Projekt nutzt GitHub Actions für eine vollautomatisierte Pipeline:
 
-Die Unit-Tests stellen sicher, dass die Koordinaten-Transformation (WKT Parsing) korrekt funktioniert.
+Continuous Integration (CI): Bei jedem Push wird der Docker-Container gebaut und die Unit-Tests (tests/) werden ausgeführt.
 
-```bash
-# Tests manuell im Container ausführen
-docker run --rm zh-trees-analysis python -m pytest tests/
-```
+Continuous Deployment (CD): Wenn die Tests erfolgreich sind, generiert der Container den Report und pusht ihn automatisch in den gh-pages Branch.
 
-Die Tests werden zudem bei jedem Push auf main automatisch durch die GitHub Actions Pipeline ausgeführt (siehe Reiter "Actions" auf GitHub).
+Hosting: GitHub Pages serviert die generierte HTML-Datei als öffentliche Webseite.
 
 ## 📂 Projektstruktur
-. <br>
+
 ├── .github/workflows/  # CI/CD configuration <br>
 ├── data/               # Locale Fallback-Data (CSV) <br>
 ├── output/             # Generated Reports <br>
