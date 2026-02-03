@@ -5,11 +5,13 @@ Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standort
 
 ## 🚀 Features
 
-* **Robustes Data Engineering:** Hybrid-Ansatz für den Datenimport (Live-Download mit Fallback auf lokale Daten bei Server-Problemen).
+* **Interaktive Visualisierung:** Nutzung von Plotly für zoom- und filterbare Karten (HTML).
+* **Robustes Data Engineering:** Hybrid-Ansatz für den Datenimport (Live-Download mit Fallback).
 * **Reproduzierbarkeit:** Vollständig containerisiert mit Docker.
 * **Qualitätssicherung:** Unit-Testing mit `pytest`.
 * **CI/CD:** Automatisierte Build- & Test-Pipeline via GitHub Actions.
 * **Automated Reporting:** Generiert Visualisierungen und eine HTML-Zusammenfassung.
+* **Code Quality:** Unit-Testing mit `pytest`.
 
 ## 🛠 Installation & Ausführung
 

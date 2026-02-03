@@ -1,27 +1,41 @@
-name: Build Analysis Container
+name: CI/CD Pipeline
 
-# Wann soll das passieren? -> Bei jedem Push auf den main Branch
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+
+# Important: we need write permission to upload report
+permissions:
+  contents: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest # Wir nutzen einen Linux-Server von GitHub
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
     steps:
-    # 1. Code aus dem Repo holen
+    # 1. fetch code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. Docker Image bauen
+    # 2. build Docker Image
     - name: Build Docker image
       run: docker build -t zh-trees-analysis .
 
-    # 3. Testlauf
+    # 3. Unit Tests (CI Part)
     - name: Run Unit Tests
+      run: docker run --rm zh-trees-analysis python -m pytest tests/
+
+    # 4. Generate Report (CD preparation)
+    # we mount the local directory "output" in the container and the file index.html lands on the GitHub-Server
+    - name: Generate Report
       run: |
-        # Wir starten den Container und führen pytest aus
-        docker run --rm zh-trees-analysis python -m pytest tests/
+        mkdir -p output
+        docker run --rm -v $(pwd)/output:/app/output zh-trees-analysis
+
+    # 5. Publication on GitHub (CD Part)
+    # This step writes the content of "output" on the website
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./output
