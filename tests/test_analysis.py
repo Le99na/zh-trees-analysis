@@ -1,19 +1,39 @@
 import pytest
+import pandas as pd
 from src.analysis import parse_geometry, get_epoch
 
-# Test 1: Funktioniert das Parsen der Koordinaten?
-def test_parse_geometry_valid():
-    input_str = "POINT (2600.5 1200.1)"
-    x, y = parse_geometry(input_str)
-    assert x == 2600.5
-    assert y == 1200.1
+# --- Tests for Geometry Parsing ---
 
-# Test 2: Was passiert bei Müll-Daten?
+def test_parse_geometry_csv_string():
+    """Test standard CSV format (WKT String)."""
+    input_str = "POINT (2683000.5 1248000.1)"
+    expected = (2683000.5, 1248000.1)
+    assert parse_geometry(input_str) == expected
+
+def test_parse_geometry_geojson_list():
+    """Test GeoJSON format (List of floats)."""
+    input_list = [2683000.5, 1248000.1]
+    expected = (2683000.5, 1248000.1)
+    assert parse_geometry(input_list) == expected
+
 def test_parse_geometry_invalid():
-    assert parse_geometry("KEIN PUNKT")[0] is None
-    assert parse_geometry(None)[0] is None
+    """Test edge cases and invalid inputs."""
+    assert parse_geometry(None) == (None, None)
+    assert parse_geometry([]) == (None, None)       # Empty list
+    assert parse_geometry("Invalid") == (None, None) # Bad string
+    assert parse_geometry([123]) == (None, None)    # Incomplete list
 
-# Test 3: Stimmen die Epochen?
-def test_get_epoch():
-    assert get_epoch(1950) == "Altbestand (< 1960)"
-    assert get_epoch(2020) == "Modern (> 1990)"
+# --- Tests for Epoch Categorization ---
+
+def test_get_epoch_categories():
+    """Test correct categorization of years."""
+    assert get_epoch(1950) == "Heritage (< 1960)"
+    assert get_epoch(1975) == "Expansion (1960-1990)"
+    assert get_epoch(2000) == "Modern (> 1990)"
+
+def test_get_epoch_edge_cases():
+    """Test boundary years and invalid input."""
+    assert get_epoch(1960) == "Expansion (1960-1990)" # Boundary check
+    assert get_epoch(1990) == "Modern (> 1990)"       # Boundary check
+    assert get_epoch(pd.NA) == "Unknown"
+    assert get_epoch("Not a number") == "Unknown"
