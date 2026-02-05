@@ -1,40 +1,48 @@
 name: CI/CD Pipeline
 
 on:
+  # CI Trigger: Run pipeline on every push to any branch (ensures quality on all branches)
   push:
+    branches: [ "**" ]
+  # CI Trigger: Run pipeline on Pull Requests targeting main
+  pull_request:
     branches: [ "main" ]
 
-# Important: we need write permission to upload report
 permissions:
-  contents: write
+  contents: write # Required for deploying to GitHub Pages
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. fetch code
+    # 1. Fetch the latest code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. build Docker Image
+    # 2. Build Docker Image (Continuous Integration)
+    # Ensures the Dockerfile is valid and the environment can be built successfully
     - name: Build Docker image
       run: docker build -t zh-trees-analysis .
 
-    # 3. Unit Tests (CI Part)
+    # 3. Run Unit Tests (The Gatekeeper)
+    # Fails the pipeline if tests don't pass. Runs on ALL branches to catch bugs early.
     - name: Run Unit Tests
       run: docker run --rm zh-trees-analysis python -m pytest tests/
 
-    # 4. Generate Report (CD preparation)
-    # we mount the local directory "output" in the container and the file index.html lands on the GitHub-Server
+    # 4. Generate Report (Artifact Generation)
+    # Generates the output folder and index.html.
+    # We use a volume mount to extract the file from the container to the host runner.
     - name: Generate Report
       run: |
         mkdir -p output
         docker run --rm -v $(pwd)/output:/app/output zh-trees-analysis
 
-    # 5. Publication on GitHub (CD Part)
-    # This step writes the content of "output" on the website
+    # 5. Deploy to GitHub Pages (Continuous Deployment)
+    # Condition: Only deploy if we are on the 'main' branch AND it is a push event.
+    # This automatically skips deployment for feature branches or PRs.
     - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

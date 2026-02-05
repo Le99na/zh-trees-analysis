@@ -3,7 +3,6 @@ import pandas as pd
 import requests
 import re
 import plotly.express as px
-from io import StringIO
 
 
 # --- Helper Functions ---
@@ -141,8 +140,8 @@ def main():
     else:
         top_species = "Unknown"
 
-    # Calculate average age (Reference year: 2024)
-    avg_age = 2024 - df_clean['pflanzjahr'].mean()
+    # Calculate average age (Reference year: 2026)
+    avg_age = 2026 - df_clean['pflanzjahr'].mean()
 
     # Create a summary string for the plot title
     stats_text = (
