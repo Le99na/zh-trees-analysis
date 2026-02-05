@@ -1,24 +1,29 @@
 # 🌳 Zurich Trees Analysis
 
-Eine reproduzierbare Data-Science-Pipeline zur Analyse des Baumkatasters der Stadt Zürich.
-Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standorte) der Bäume und generiert einen **interaktiven HTML-Report**.
+Eine robuste, reproduzierbare Data-Science-Pipeline zur Analyse des Baumkatasters der Stadt Zürich. Dieses Projekt analysiert die spatiotemporale Verteilung (Pflanzjahre & Standorte) der Bäume und generiert vollautomatisiert einen **interaktiven HTML-Report**.
 
 ### 🔗 [Hier klicken für die Live-Demo (Interaktiver Report)](https://le99na.github.io/zh-trees-analysis/)
-*(Der Report wird automatisch via CI/CD bei jedem Update neu generiert)*
+*(Der Report wird via GitHub Actions generiert und auf GitHub Pages gehostet)*
 
-## 🚀 Features
+## 🚀 Key Features
 
-* **Interaktive Visualisierung:** Nutzung von Plotly für zoom- und filterbare Karten (HTML).
-* **Robustes Data Engineering:** Hybrid-Ansatz für den Datenimport (Live-Download mit Fallback).
-* **Reproduzierbarkeit:** Vollständig containerisiert mit Docker.
-* **Qualitätssicherung:** Unit-Testing mit `pytest`.
-* **CI:** Automatisierte Build- & Test-Pipeline via **GitHub Actions**.
-* **Continuous Deployment (CD):** Vollautomatisches Publishing des Reports auf **GitHub Pages**.
-* **Code Quality:** Unit-Testing mit `pytest`.
+* 🛡️  **Robustes Data Engineering (Hybrid Pipeline):** Die Pipeline priorisiert Live-Daten (GeoJSON via WFS-Schnittstelle) für maximale Aktualität. Sollte die API nicht erreichbar sein, greift das System automatisch auf einen **lokalen CSV-Fallback** zurück.
+* 🔄 **Polymorphe Datenverarbeitung:** Ein intelligenter Parser verarbeitet sowohl GeoJSON-Listenstrukturen als auch WKT-Strings (CSV) im selben Code-Pfad.
+* 📊 **Interaktive Visualisierung:** Erstellung zoom- und filterbarer Karten mittels Plotly (kein statisches Bild, sondern echte Datenexploration).
+* 🐳 **Reproduzierbarkeit:** Vollständig containerisiert mit Docker. Die lokale Umgebung verhält sich exakt wie die CI-Umgebung.
+* ✅ **CI/CD mit Guardrails:** Automatisierte Tests bei jedem Push, aber Deployment nur bei verifiziertem Code auf dem main-Branch.
 
-## 🛠 Installation & Ausführung
+## ⚙️ CI/CD Pipeline Strategie
+Dieses Projekt nutzt eine kontext-sensitive Pipeline in GitHub Actions (.github/workflows/main.yml), um Qualitätssicherung und Deployment zu steuern:
+| Phase | Trigger | Beschreibung |
+| :--- | :--- | :--- |
+| **1. Continuous Integration (CI)** | Push auf **JEDEN** Branch | Baut den Docker-Container und führt Unit-Tests (`pytest`) aus. Dies dient als **Gatekeeper**: Fehlerhafter Code wird sofort erkannt, bevor er gemerged wird. |
+| **2. Artifact Generation** | Erfolgreiche CI | Der Container generiert den Report (`index.html`) im isolierten Environment und extrahiert ihn via Volume-Mount. |
+| **3. Continuous Deployment (CD)** | Push nur auf **MAIN** | Nur wenn die Tests bestehen **UND** der Code auf dem `main`-Branch liegt, wird der Report automatisch auf **GitHub Pages** veröffentlicht. |
 
-Falls Sie den Container lokal bauen und laufen lassen möchten (statt die Live-Demo anzusehen):
+## 🛠 Lokale Installation & Ausführung
+
+Sie können die gesamte Pipeline lokal in einem Docker-Container ausführen. Dies simuliert exakt den Prozess, der auch auf dem GitHub-Runner stattfindet.
 
 Voraussetzung: [Docker](https://www.docker.com/) muss installiert sein.
 
@@ -29,7 +34,7 @@ docker build -t zh-trees-analysis .
 
 ### 2. Analyse starten
 
-Der Container benötigt Zugriff auf einen lokalen data-Ordner (Input) und einen output-Ordner (Ergebnis). Führen Sie folgenden Befehl im Hauptverzeichnis des Projekts aus:
+Der Container benötigt Zugriff auf den lokalen output-Ordner, um den HTML-Bericht dort abzulegen.
 
 #### Linux/Mac:
 ```bash
@@ -47,27 +52,25 @@ docker run --rm `
   zh-trees-analysis
 ```
 
-Ergebnis: Öffnen Sie nach dem Durchlauf die Datei output/index.html in Ihrem Browser. Sie können in der Legende auf Epochen klicken, um diese ein- oder auszublenden.
+✅ Ergebnis: Nach dem Durchlauf finden Sie die Datei index.html in Ihrem output/-Ordner.
 
-## ⚙️ CI/CD Pipeline
+## 🧪 Testing
 
-Dieses Projekt nutzt GitHub Actions für eine vollautomatisierte Pipeline:
+Die Unit-Tests decken insbesondere die Edge Cases des Daten-Parsings (GeoJSON vs. CSV) und die Business-Logik (Epochen-Einteilung) ab.
 
-1. Continuous Integration (CI): Bei jedem Push wird der Docker-Container gebaut und die Unit-Tests (tests/) werden ausgeführt.
-
-2. Continuous Deployment (CD): Wenn die Tests erfolgreich sind, generiert der Container den Report und pusht ihn automatisch in den gh-pages Branch.
-
-3. Hosting: GitHub Pages serviert die generierte HTML-Datei als öffentliche Webseite.
+Tests lokal ausführen:
+```bash
+docker run --rm zh-trees-analysis python -m pytest tests/
+```
 
 ## 📂 Projektstruktur
 
-├── .github/workflows/  # CI/CD configuration <br>
-├── data/               # Locale Fallback-Data (CSV) <br>
-├── output/             # Generated Reports <br>
-├── src/                # Quellcode <br>
-├── tests/              # Unit Tests <br>
-├── Dockerfile          # Container Definition <br>
-├── requirements.txt    # Python Dependencies <br>
-└── README.md           # Documentation <br>
-
-
+├── .github/workflows/  # CI/CD Konfiguration (Github Actions)
+├── data/               # Lokaler Fallback-Datensatz (CSV)
+├── output/             # Zielordner für generierte Reports
+├── src/
+│   └── analysis.py     # ETL, Cleaning & Plotting Logik
+├── tests/              # Pytest Unit-Tests
+├── Dockerfile          # Definition der Laufzeitumgebung
+├── requirements.txt    # Python Abhängigkeiten
+└── README.md           # Dokumentation
