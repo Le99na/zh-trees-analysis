@@ -65,12 +65,12 @@ docker run --rm zh-trees-analysis python -m pytest tests/
 
 ## 📂 Projektstruktur
 
-├── .github/workflows/  # CI/CD Konfiguration (Github Actions)
-├── data/               # Lokaler Fallback-Datensatz (CSV)
-├── output/             # Zielordner für generierte Reports
+├── .github/workflows/  # CI/CD Konfiguration (Github Actions) <br>
+├── data/               # Lokaler Fallback-Datensatz (CSV) <br>
+├── output/             # Zielordner für generierte Reports <br>
 ├── src/
-│   └── analysis.py     # ETL, Cleaning & Plotting Logik
-├── tests/              # Pytest Unit-Tests
-├── Dockerfile          # Definition der Laufzeitumgebung
-├── requirements.txt    # Python Abhängigkeiten
-└── README.md           # Dokumentation
+│   └── analysis.py     # ETL, Cleaning & Plotting Logik <br>
+├── tests/              # Pytest Unit-Tests <br>
+├── Dockerfile          # Definition der Laufzeitumgebung <br>
+├── requirements.txt    # Python Abhängigkeiten <br>
+└── README.md           # Dokumentation <br>
